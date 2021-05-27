@@ -26,11 +26,15 @@ skim_without_charts(train)
 
 
 # recipe ------------------------------------------------------------------
-rf_recipe <- recipe(hi_int_prncp_pd ~ ., data = train) %>% 
-  step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE) %>%
-  step_normalize(all_numeric()) 
+recipe <- recipe(hi_int_prncp_pd ~ ., data = train) %>% 
+  step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE) %>% 
+  step_interact(hi_int_prncp_pd ~ (.)^2) %>% 
+  step_other(all_nominal(), -all_outcomes(), threshold = 0.2) %>% 
+  step_normalize(all_predictors()) %>% 
+  step_zv(all_predictors()) 
+  
 
-rf_recipe %>% 
+recipe %>% 
   prep() %>% 
   bake(new_data = NULL)
 
@@ -66,5 +70,5 @@ rf_wflow <- workflow() %>%
 rf_tuned <- rf_wflow %>% 
   tune_grid(folds, grid = rf_grid)
 
-write_rds(rf_tuned, "model_info/rf_tuned")
+
 
