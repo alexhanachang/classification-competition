@@ -11,7 +11,10 @@ test <- read.csv(file = "data/test.csv")
 train <- read.csv(file = "data/train.csv")
 
 train <- train %>% 
-  mutate_if(is_character, as_factor)
+  mutate_if(is_character, as_factor) %>% 
+  mutate(
+    hi_int_prncp_pd = factor(hi_int_prncp_pd, levels = c("1", "0"))
+  )
 
 
 # set-seed -----------------------------------------------------------------
@@ -25,8 +28,8 @@ skim_without_charts(train)
 # recipe ------------------------------------------------------------------
 rf_recipe <- recipe(hi_int_prncp_pd ~ ., data = train) %>% 
   step_dummy(all_nominal(), -all_outcomes(), one_hot = TRUE) %>%
-  step_zv(all_predictors(), -all_outcomes()) %>%
-  step_normalize(all_predictors())
+  step_normalize(all_numeric()) %>% 
+  step_interact(hi_int_prncp_pd ~ (.)^2)
 
 rf_recipe %>% 
   prep() %>% 
@@ -42,7 +45,7 @@ rf_model <- rand_forest(
   mtry = tune(), 
   min_n = tune()) %>% 
   set_mode("classification") %>% 
-  set_engine('ranger')
+  set_engine("ranger")
 
 
 # define-tuning-grid ------------------------------------------------------
